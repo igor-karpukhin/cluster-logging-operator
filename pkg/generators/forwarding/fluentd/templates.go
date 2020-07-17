@@ -18,6 +18,7 @@ var templateRegistry = []string{
 	storeSyslogTemplateOld,
 	storeSyslogTemplate,
 	storeKafkaTemplate,
+	pipelinesToLabels,
 }
 
 const fluentConfTemplate = `{{- define "fluentConf" -}}
@@ -458,6 +459,12 @@ const inputSourceOpenShiftAuditTemplate = `{{- define "inputSourceOpenShiftAudit
 
 const sourceToPipelineCopyTemplate = `{{- define "sourceToPipelineCopyTemplate" -}}
 <label {{sourceTypelabelName .Source}}>
+  <filter **>
+    @type record_transformer
+    <record>
+      
+    </record>
+  </filter>
   <match **>
     @type copy
 {{ range $index, $pipelineLabel := .PipelineNames }}
@@ -694,5 +701,17 @@ ssl_client_cert_key '{{ .SecretPath "tls.key"}}'
   chunk_limit_size "#{ENV['BUFFER_SIZE_LIMIT'] || '8m' }"
   overflow_action "#{ENV['BUFFER_QUEUE_FULL_ACTION'] || 'block'}"
 </buffer>
+{{- end}}
+`
+
+const pipelinesToLabels = `{{- define "pipelinesToLabels" -}}
+<label @{{.Name}}>
+  <filter **>
+    @type record_transformer
+    <record>
+      openshift { "labels": {{.Labels}} }
+    </record>
+  </filter>
+</label>
 {{- end}}
 `

@@ -185,6 +185,9 @@ type PipelineSpec struct {
 	// +required
 	InputRefs []string `json:"inputRefs"`
 
+	// Labels lists labels applied to this pipeline
+	// +optional
+	Labels map[string]string `json:"labels"`
 	// Name is optional, but must be unique in the `pipelines` list if provided.
 	//
 	// +optional

@@ -56,17 +56,20 @@ var _ = Describe("ClusterLogForwarder", func() {
     pipelines:
     - inputRefs:
       - application
+      labels: null
       outputRefs:
       - X
       - "Y"
     - inputRefs:
       - infrastructure
       - audit
+      labels: null
       outputRefs:
       - "Y"
       - Z
     - inputRefs:
       - audit
+      labels: null
       outputRefs:
       - X
       - Z
@@ -97,7 +100,8 @@ var _ = Describe("ClusterLogForwarder", func() {
           ],
           "inputRefs": [
             "application"
-          ]
+          ],
+          "labels": null
         },
         {
           "outputRefs": [
@@ -107,7 +111,8 @@ var _ = Describe("ClusterLogForwarder", func() {
           "inputRefs": [
             "infrastructure",
             "audit"
-          ]
+          ],
+          "labels": null
         },
         {
           "outputRefs": [
@@ -116,7 +121,8 @@ var _ = Describe("ClusterLogForwarder", func() {
           ],
           "inputRefs": [
             "audit"
-          ]
+          ],
+          "labels": null
         }
       ]
     },

@@ -254,6 +254,8 @@ func (engine *ConfigGenerator) generateOutputLabelBlocks(outputs []logging.Outpu
 		log.V(3).Info("Generate output type", "type", output.Type)
 		engine.outputTemplate = "outputLabelConf" // Default
 		switch output.Type {
+		case logging.OutputTypeCloudwatch:
+			engine.outputTemplate = "outputLabelConfCloudwatch"
 		case logging.OutputTypeElasticsearch:
 			engine.storeTemplate = "storeElasticsearch"
 		case logging.OutputTypeFluentdForward:

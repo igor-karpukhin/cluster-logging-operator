@@ -2,6 +2,7 @@ package v1
 
 // Output type constants, must match JSON tags of OutputTypeSpec fields.
 const (
+	OutputTypeCloudwatch     = "cloudwatch"
 	OutputTypeElasticsearch  = "elasticsearch"
 	OutputTypeFluentdForward = "fluentdForward"
 	OutputTypeSyslog         = "syslog"
@@ -22,7 +23,33 @@ type OutputTypeSpec struct {
 	Elasticsearch *Elasticsearch `json:"elasticsearch,omitempty"`
 	// +optional
 	Kafka *Kafka `json:"kafka,omitempty"`
+	// +optional
+	Cloudwatch *Cloudwatch `json:"cloudwatch,omitempty"`
 }
+
+// Cloudwatch provides configuration for the output type `cloudwatch`
+type Cloudwatch struct {
+	// +required
+	Region string `json:"region,omitempty"`
+
+	//GroupBy defines the strategy for grouping logstreams
+	// +required
+	GroupBy LogGroupByType `json:"groupBy,omitempty"`
+}
+
+// LogGroupByType defines a fixed strategy type
+type LogGroupByType string
+
+const (
+	//LogGroupByLogType is the strategy to group logs by source(e.g. app, infra)
+	LogGroupByLogType LogGroupByType = "logType"
+
+	// LogGroupByNamespaceName is the strategy to use for grouping logs by namespace
+	LogGroupByNamespaceName LogGroupByType = "namespaceName"
+
+	// LogGroupByNamespaceUUID  is the strategy to use for grouping logs by namespace UUID
+	LogGroupByNamespaceUUID LogGroupByType = "namespaceUUID"
+)
 
 // Syslog provides optional extra properties for output type `syslog`
 type Syslog struct {

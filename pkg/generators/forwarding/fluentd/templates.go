@@ -10,6 +10,7 @@ var templateRegistry = []string{
 	fluentConfTemplate,
 	pipelineToOutputCopyTemplate,
 	sourceToPipelineCopyTemplate,
+	outputLabelConfCloudwatch,
 	outputLabelConfTemplate,
 	outputLabelConfNocopyTemplate,
 	outputLabelConfNoretryTemplate,
@@ -586,6 +587,47 @@ const pipelineToOutputCopyTemplate = `{{- define "pipelineToOutputCopyTemplate" 
       @label {{labelName $target}}
     </store>
 {{- end }}
+  </match>
+</label>
+{{- end}}`
+
+const outputLabelConfCloudwatch = `{{- define "outputLabelConfCloudwatch" -}}
+<label {{.LabelName}}>
+  <filter kubernetes.**>
+    @type record_transformer
+    <record>
+      cw_group_name {{.LogGroupName }}
+      cw_stream_name ${tag}
+    </record>
+  </filter>
+  <filter journal **_default_** **_kube-*_** **_openshift-*_** **_openshift_**>
+    @type record_transformer
+    <record>
+      cw_group_name infrastructure
+      cw_stream_name ${record["hostname"]}.${tag}
+    </record>
+  </filter>
+  <filter *audit.log>
+    @type record_transformer
+    <record>
+      cw_group_name audit
+      cw_stream_name ${record["hostname"]}.${tag}
+    </record>
+  </filter>
+  <match **>
+    @type cloudwatch_logs
+    auto_create_stream true
+    region {{ .Target.Cloudwatch.Region }}
+    log_group_name cw_group_name
+	log_stream_name_key cw_stream_name
+    remove_log_stream_name_key true
+    remove_log_group_name_key true
+    auto_create_stream true
+    concurrency 2
+    aws_key_id "#{open('{{ .SecretPath "aws_access_key_id"}}','r') do |f|f.read end}"
+    aws_sec_key "#{open('{{ .SecretPath "aws_secret_access_key"}}','r') do |f|f.read end}"
+    include_time_key true
+    log_rejected_request true
   </match>
 </label>
 {{- end}}`

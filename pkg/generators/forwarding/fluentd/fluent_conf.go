@@ -79,9 +79,24 @@ func (conf *outputLabelConf) Protocol() string {
 	}
 }
 
+func (conf *outputLabelConf) LogGroupName() string {
+	if conf.Target.Type == logging.OutputTypeCloudwatch {
+		switch conf.Target.Cloudwatch.GroupBy {
+		case logging.LogGroupByNamespaceName:
+			return "${record['kubernetes']['namespace_name']}"
+		case logging.LogGroupByNamespaceUUID:
+			return "${record['kubernetes']['namespace_id']}"
+		default:
+			return logging.InputNameApplication
+		}
+	}
+	return ""
+}
+
 func (conf *outputLabelConf) BufferPath() string {
 	return fmt.Sprintf("/var/lib/fluentd/%s", conf.StoreID())
 }
+
 func (conf *outputLabelConf) SecretPath(file string) string {
 	return fmt.Sprintf("/var/run/ocp-collector/secrets/%s/%s", conf.Target.Secret.Name, file)
 }

@@ -198,6 +198,7 @@ func (clusterRequest *ClusterLoggingRequest) verifyPipelines(spec *logging.Clust
 
 		goodIn, msgIn := verifyRefs("inputs", pipeline.InputRefs, inputs)
 		goodOut, msgOut := verifyRefs("outputs", pipeline.OutputRefs, outputs)
+
 		if msgs := append(msgIn, msgOut...); len(msgs) > 0 { // Something wrong
 			msg := strings.Join(msgs, ", ")
 			if len(goodIn) == 0 || len(goodOut) == 0 { // All bad, disabled

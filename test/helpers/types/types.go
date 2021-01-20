@@ -151,6 +151,7 @@ type LinuxAuditLog struct {
 	ViaqIndexName    string           `json:"viaq_index_name"`
 	ViaqMsgID        string           `json:"viaq_msg_id"`
 	Kubernetes       Kubernetes       `json:"kubernetes"`
+	OpenshiftLabels  OpenshiftMeta    `json:"openshift"`
 }
 
 type AuditLinux struct {

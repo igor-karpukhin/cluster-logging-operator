@@ -79,21 +79,16 @@ func (conf *outputLabelConf) Protocol() string {
 	}
 }
 
-func (conf *outputLabelConf) LogRetentionDays() int {
-	if conf.Target.Type == logging.OutputTypeCloudwatch {
-		return conf.Target.Cloudwatch.LogGroupStrategy.RetentionInDays
-	}
-	return 0
-}
 func (conf *outputLabelConf) LogGroupName() string {
 	if conf.Target.Type == logging.OutputTypeCloudwatch {
-		switch conf.Target.Cloudwatch.LogGroupStrategy.Name {
-		case logging.LogGroupStrategyTypeNamespace:
+		switch conf.Target.Cloudwatch.GroupBy {
+		case logging.LogGroupByNamespaceName:
 			return `${record["kubernetes"]["namespace_name"]}`
+		case logging.LogGroupByNamespaceUUID:
+			return `${record["kubernetes"]["namespace_id"]}`
 		default:
-			return ""
+			return "application"
 		}
-		return fmt.Sprintf("/var/lib/fluentd/%s", conf.StoreID())
 	}
 	return ""
 }

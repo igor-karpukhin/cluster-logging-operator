@@ -29,42 +29,27 @@ type OutputTypeSpec struct {
 
 // Cloudwatch provides configuration for the output type `cloudwatch`
 type Cloudwatch struct {
-
-	//LogGroupStrategy defines how logstreams are created and configured
-	//
-	// +required
-	LogGroupStrategy CloudwatchLogGroupStrategy `json:"logGroupStrategy,omitempty"`
-
 	// +required
 	Region string `json:"region,omitempty"`
+
+	//GroupBy defines the strategy for grouping logstreams
+	// +required
+	GroupBy LogGroupByType `json:"groupBy,omitempty"`
 }
 
-// LogGroupStrategyType defines a fixed strategy type
-type LogGroupStrategyType string
+// LogGroupByType defines a fixed strategy type
+type LogGroupByType string
 
 const (
-	// LogGroupStrategyTypeNamespace is the strategy to use for grouping logs (e.g. ns, source)
-	LogGroupStrategyTypeNamespace LogGroupStrategyType = "namespace"
+	//LogGroupByLogType is the strategy to group logs by source(e.g. app, infra)
+	LogGroupByLogType LogGroupByType = "logType"
+
+	// LogGroupByNamespaceName is the strategy to use for grouping logs by namespace
+	LogGroupByNamespaceName LogGroupByType = "namespaceName"
+
+	// LogGroupByNamespaceUUID  is the strategy to use for grouping logs by namespace UUID
+	LogGroupByNamespaceUUID LogGroupByType = "namespaceUUID"
 )
-
-// CloudwatchLogGroupStrategy defines a logstream strategy for cloudwatch
-type CloudwatchLogGroupStrategy struct {
-	// Name used to refer to the naming strategy
-	//
-	// +kubebuilder:validation:minLength:=1
-	// +required
-	Name LogGroupStrategyType `json:"name"`
-
-	CloudwatchLogGroupStrategyTypeSpec `json:",inline"`
-}
-
-// CloudwatchLogGroupStrategyTypeSpec is spec for a given logstream strategy
-type CloudwatchLogGroupStrategyTypeSpec struct {
-	// RetentionInDays the default number of days retention for a logstream
-	//
-	// +required
-	RetentionInDays int `json:"retentionInDays"`
-}
 
 // Syslog provides optional extra properties for output type `syslog`
 type Syslog struct {

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math/rand"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -22,6 +23,24 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 )
+
+const (
+	applicationLog = "application"
+	auditLog       = "audit"
+	k8sAuditLog    = "k8s"
+)
+
+var fluentdLogPath = map[string]string{
+	applicationLog: "/var/log/containers",
+	auditLog:       "/var/log/audit",
+	k8sAuditLog:    "/var/log/kube-apiserver",
+}
+
+var outputLogFile = map[string]string{
+	applicationLog: "/tmp/app-logs",
+	auditLog:       "/tmp/audit-logs",
+	k8sAuditLog:    "/tmp/audit-logs",
+}
 
 var (
 	maxDuration          time.Duration
@@ -85,9 +104,17 @@ func (f *FluentdFunctionalFramework) RunCommand(container string, cmd ...string)
 
 //Deploy the objects needed to functional test
 func (f *FluentdFunctionalFramework) Deploy() (err error) {
+	visiter := func(b *runtime.PodBuilder) error {
+		return f.addOutputContainers(b, f.Forwarder.Spec.Outputs)
+	}
+	return f.DeployWithVisitor(visiter)
+}
+
+//Deploy the objects needed to functional test
+func (f *FluentdFunctionalFramework) DeployWithVisitor(visit runtime.PodBuilderVisitor) (err error) {
 	log.V(2).Info("Generating config", "forwarder", f.Forwarder)
 	clfYaml, _ := yaml.Marshal(f.Forwarder)
-	if f.Conf, err = forwarder.Generate(string(clfYaml), false); err != nil {
+	if f.Conf, err = forwarder.Generate(string(clfYaml), false, false); err != nil {
 		return err
 	}
 	log.V(2).Info("Generating Certificates")
@@ -139,7 +166,7 @@ func (f *FluentdFunctionalFramework) Deploy() (err error) {
 		AddVolumeMount("entrypoint", "/opt/app-root/src/run.sh", "run.sh", true).
 		AddVolumeMount("certs", "/etc/fluent/metrics", "", true).
 		End()
-	if err = f.addOutputContainers(b, f.Forwarder.Spec.Outputs); err != nil {
+	if err = visit(b); err != nil {
 		return err
 	}
 	log.V(2).Info("Creating pod", "pod", f.pod)
@@ -148,7 +175,7 @@ func (f *FluentdFunctionalFramework) Deploy() (err error) {
 	}
 
 	log.V(2).Info("waiting for pod to be ready")
-	if err = oc.Literal().From(fmt.Sprintf("oc wait -n %s pod/%s --timeout=120s --for=condition=Ready", f.test.NS.Name, f.Name)).Output(); err != nil {
+	if err = oc.Literal().From("oc wait -n %s pod/%s --timeout=120s --for=condition=Ready", f.test.NS.Name, f.Name).Output(); err != nil {
 		return err
 	}
 	if err = f.test.Client.Get(f.pod); err != nil {
@@ -171,7 +198,7 @@ func (f *FluentdFunctionalFramework) Deploy() (err error) {
 	}
 	log.V(2).Info("waiting for fluentd to be ready")
 	err = wait.PollImmediate(time.Second*2, time.Second*30, func() (bool, error) {
-		output, err := oc.Literal().From(fmt.Sprintf("oc logs -n %s pod/%s %s", f.test.NS.Name, f.Name, constants.FluentdName)).Run()
+		output, err := oc.Literal().From("oc logs -n %s pod/%s %s", f.test.NS.Name, f.Name, constants.FluentdName).Run()
 		if err != nil {
 			return false, nil
 		}
@@ -206,26 +233,61 @@ func (f *FluentdFunctionalFramework) addOutputContainers(b *runtime.PodBuilder, 
 	return nil
 }
 
-func (f *FluentdFunctionalFramework) WritesApplicationLogs(numOfLogs int) error {
-	msg := "2020-11-04T18:13:59.061892999+00:00 stdout F Functional test message $n"
-	return f.WritesMessageToApplicationLogs(msg, numOfLogs)
+func (f *FluentdFunctionalFramework) WaitForPodToBeReady() error {
+	return oc.Literal().From(fmt.Sprintf("oc wait -n %s pod/%s --timeout=60s --for=condition=Ready", f.test.NS.Name, f.Name)).Output()
 }
 
-func (f *FluentdFunctionalFramework) WritesMessageToApplicationLogs(msg string, numOfLogs int) error {
-	filepath := fmt.Sprintf("/var/log/containers/%s_%s_%s-%s.log", f.pod.Name, f.pod.Namespace, constants.FluentdName, f.fluentContainerId)
-	result, err := f.RunCommand(constants.FluentdName, "bash", "-c", fmt.Sprintf("bash -c 'mkdir -p /var/log/containers;for n in {1..%d};do echo %s > %s; done'", numOfLogs, msg, filepath))
-	log.V(3).Info("FluentdFunctionalFramework.WritesApplicationLogs", "result", result, "err", err)
+func (f *FluentdFunctionalFramework) WritesApplicationLogs(numOfLogs int) error {
+	msg := "2020-11-04T18:13:59.061892999+00:00 stdout F Functional test message $n"
+	return f.WriteMessagesToApplicationLog(msg, numOfLogs)
+}
+
+func (f *FluentdFunctionalFramework) WriteMessagesToApplicationLog(msg string, numOfLogs int) error {
+	filename := fmt.Sprintf("%s/%s_%s_%s-%s.log", fluentdLogPath[applicationLog], f.pod.Name, f.pod.Namespace, constants.FluentdName, f.fluentContainerId)
+	return f.WriteMessagesToLog(msg, numOfLogs, filename)
+}
+
+func (f *FluentdFunctionalFramework) WriteMessagesToAuditLog(msg string, numOfLogs int) error {
+	filename := fmt.Sprintf("%s/audit.log", fluentdLogPath[auditLog])
+	return f.WriteMessagesToLog(msg, numOfLogs, filename)
+}
+
+func (f *FluentdFunctionalFramework) WriteMessagesTok8sAuditLog(msg string, numOfLogs int) error {
+	filename := fmt.Sprintf("%s/audit.log", fluentdLogPath[k8sAuditLog])
+	return f.WriteMessagesToLog(msg, numOfLogs, filename)
+}
+
+func (f *FluentdFunctionalFramework) WriteMessagesToLog(msg string, numOfLogs int, filename string) error {
+	logPath := filepath.Dir(filename)
+	cmd := fmt.Sprintf("bash -c 'mkdir -p %s;for n in {1..%d};do echo \"%s\" >> %s;done'", logPath, numOfLogs, msg, filename)
+	result, err := f.RunCommand(constants.FluentdName, "bash", "-c", cmd)
+	log.V(3).Info("FluentdFunctionalFramework.WriteMessagesToLog", "result", result, "err", err)
 	return err
 }
 
 func (f *FluentdFunctionalFramework) ReadApplicationLogsFrom(outputName string) (result string, err error) {
-	file := "/tmp/app-logs"
+	return f.ReadLogsFrom(outputName, applicationLog)
+}
+
+func (f *FluentdFunctionalFramework) ReadAuditLogsFrom(outputName string) (result string, err error) {
+	return f.ReadLogsFrom(outputName, auditLog)
+}
+
+func (f *FluentdFunctionalFramework) Readk8sAuditLogsFrom(outputName string) (result string, err error) {
+	return f.ReadLogsFrom(outputName, k8sAuditLog)
+}
+
+func (f *FluentdFunctionalFramework) ReadLogsFrom(outputName string, outputLogType string) (result string, err error) {
+	file, ok := outputLogFile[outputLogType]
+	if !ok {
+		return "", fmt.Errorf(fmt.Sprintf("can't find log of type %s", outputLogType))
+	}
 	err = wait.PollImmediate(defaultRetryInterval, maxDuration, func() (done bool, err error) {
 		result, err = f.RunCommand(outputName, "cat", file)
 		if err == nil {
 			return true, nil
 		}
-		log.V(4).Error(err, "Polling application logs")
+		log.V(4).Error(err, "Polling logs")
 		return false, nil
 	})
 	if err == nil {

@@ -94,21 +94,9 @@ spec:
                       description: Cloudwatch provides configuration for the output
                         type `cloudwatch`
                       properties:
-                        logGroupStrategy:
-                          description: LogGroupStrategy defines how logstreams are
-                            created and configured
-                          properties:
-                            name:
-                              description: Name used to refer to the naming strategy
-                              type: string
-                            retentionInDays:
-                              description: RetentionInDays the default number of days
-                                retention for a logstream
-                              type: integer
-                          required:
-                          - name
-                          - retentionInDays
-                          type: object
+                        groupBy:
+                          description: GroupBy defines the strategy for grouping logstreams
+                          type: string
                         region:
                           type: string
                       type: object

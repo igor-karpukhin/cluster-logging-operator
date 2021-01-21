@@ -83,11 +83,11 @@ func (conf *outputLabelConf) LogGroupName() string {
 	if conf.Target.Type == logging.OutputTypeCloudwatch {
 		switch conf.Target.Cloudwatch.GroupBy {
 		case logging.LogGroupByNamespaceName:
-			return `${record["kubernetes"]["namespace_name"]}`
+			return "${record['kubernetes']['namespace_name']}"
 		case logging.LogGroupByNamespaceUUID:
-			return `${record["kubernetes"]["namespace_id"]}`
+			return "${record['kubernetes']['namespace_id']}"
 		default:
-			return "application"
+			return logging.InputNameApplication
 		}
 	}
 	return ""

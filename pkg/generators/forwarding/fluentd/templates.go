@@ -595,6 +595,7 @@ const outputLabelConfCloudwatch = `{{- define "outputLabelConfCloudwatch" -}}
 <label {{.LabelName}}>
   <filter kubernetes.**>
     @type record_transformer
+	enable_ruby true
     <record>
       cw_group_name {{.LogGroupName }}
       cw_stream_name ${tag}
@@ -602,23 +603,25 @@ const outputLabelConfCloudwatch = `{{- define "outputLabelConfCloudwatch" -}}
   </filter>
   <filter journal **_default_** **_kube-*_** **_openshift-*_** **_openshift_**>
     @type record_transformer
-    <record>
+	enable_ruby true
+	<record>
       cw_group_name infrastructure
-      cw_stream_name ${record["hostname"]}.${tag}
+      cw_stream_name ${record['hostname']}.${tag}
     </record>
   </filter>
   <filter *audit.log>
     @type record_transformer
+	enable_ruby true
     <record>
       cw_group_name audit
-      cw_stream_name ${record["hostname"]}.${tag}
+      cw_stream_name ${record['hostname']}.${tag}
     </record>
   </filter>
   <match **>
     @type cloudwatch_logs
     auto_create_stream true
     region {{ .Target.Cloudwatch.Region }}
-    log_group_name cw_group_name
+    log_group_name_key cw_group_name
 	log_stream_name_key cw_stream_name
     remove_log_stream_name_key true
     remove_log_group_name_key true

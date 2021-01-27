@@ -97,6 +97,11 @@ spec:
                         groupBy:
                           description: GroupBy defines the strategy for grouping logstreams
                           type: string
+                        groupPrefix:
+                          description: GroupPrefix Add this prefix to all group names.  Useful
+                            to avoid group name clashes if an AWS account is used
+                            for multiple clusters.
+                          type: string
                         region:
                           type: string
                       type: object

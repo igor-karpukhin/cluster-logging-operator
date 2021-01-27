@@ -57,7 +57,7 @@ func Generate(clfYaml string, includeDefaultLogStore, includeLegacyForward bool)
 
 	tunings := &logging.ForwarderSpec{}
 
-	generatedConfig, err := generator.Generate(spec, tunings)
+	generatedConfig, err := generator.Generate(spec, nil, tunings)
 	if err != nil {
 		return "", fmt.Errorf("Unable to generate log configuration: %v", err)
 	}

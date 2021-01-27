@@ -597,7 +597,7 @@ const outputLabelConfCloudwatch = `{{- define "outputLabelConfCloudwatch" -}}
     @type record_transformer
 	enable_ruby true
     <record>
-      cw_group_name {{.LogGroupName }}
+      cw_group_name {{.LogGroupPrefix }}{{.LogGroupName }}
       cw_stream_name ${tag}
     </record>
   </filter>
@@ -605,7 +605,7 @@ const outputLabelConfCloudwatch = `{{- define "outputLabelConfCloudwatch" -}}
     @type record_transformer
 	enable_ruby true
 	<record>
-      cw_group_name infrastructure
+      cw_group_name {{.LogGroupPrefix }}infrastructure
       cw_stream_name ${record['hostname']}.${tag}
     </record>
   </filter>
@@ -613,7 +613,7 @@ const outputLabelConfCloudwatch = `{{- define "outputLabelConfCloudwatch" -}}
     @type record_transformer
 	enable_ruby true
     <record>
-      cw_group_name audit
+      cw_group_name {{.LogGroupPrefix }}audit
       cw_stream_name ${record['hostname']}.${tag}
     </record>
   </filter>
@@ -622,7 +622,7 @@ const outputLabelConfCloudwatch = `{{- define "outputLabelConfCloudwatch" -}}
     auto_create_stream true
     region {{ .Target.Cloudwatch.Region }}
     log_group_name_key cw_group_name
-	log_stream_name_key cw_stream_name
+    log_stream_name_key cw_stream_name
     remove_log_stream_name_key true
     remove_log_group_name_key true
     auto_create_stream true
@@ -684,20 +684,33 @@ const forwardTemplate = `{{- define "forward" -}}
 # https://docs.fluentd.org/v1.0/articles/in_forward
 @type forward
 heartbeat_type none
-{{ if .Target.Secret }}
+{{- with $sharedKey := .GetSecret "shared_key" }}
 <security>
   self_hostname "#{ENV['NODE_NAME']}"
-  shared_key "#{File.open('{{ .SecretPath "shared_key" }}') do |f| f.readline end.rstrip}"
+  shared_key "{{$sharedKey}}"
 </security>
+{{- end}}
+{{- if .IsTLS }}
 
 transport tls
 tls_verify_hostname false
 tls_version 'TLSv1_2'
 
-#tls_client_private_key_path {{ .SecretPath "tls.key"}}
-tls_client_cert_path {{ .SecretPath "tls.crt"}}
-tls_cert_path {{ .SecretPath "ca-bundle.crt"}}
-{{ end -}}
+{{- if not .Secret}}
+tls_insecure_mode true
+{{- end}}
+
+{{- with $path := .SecretPathIfFound "tls.key"}}
+tls_client_private_key_path "{{$path}}"
+{{- end}}
+{{- with $path := .SecretPathIfFound "tls.crt"}}
+tls_client_cert_path "{{$path}}"
+{{- end}}
+{{- with $path := .SecretPathIfFound "ca-bundle.crt"}}
+tls_cert_path "{{$path}}"
+{{- end}}
+
+{{- end}}
 
 <buffer>
   @type file

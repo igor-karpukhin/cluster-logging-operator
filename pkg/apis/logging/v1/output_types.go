@@ -35,6 +35,11 @@ type Cloudwatch struct {
 	//GroupBy defines the strategy for grouping logstreams
 	// +required
 	GroupBy LogGroupByType `json:"groupBy,omitempty"`
+
+	//GroupPrefix Add this prefix to all group names.
+	//  Useful to avoid group name clashes if an AWS account is used for multiple clusters.
+	// +optional
+	GroupPrefix string `json:"groupPrefix,omitempty"`
 }
 
 // LogGroupByType defines a fixed strategy type

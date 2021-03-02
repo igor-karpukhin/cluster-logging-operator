@@ -622,10 +622,9 @@ const outputLabelConfCloudwatch = `{{- define "outputLabelConfCloudwatch" -}}
     auto_create_stream true
     region {{ .Target.Cloudwatch.Region }}
     log_group_name_key cw_group_name
-	log_stream_name_key cw_stream_name
+    log_stream_name_key cw_stream_name
     remove_log_stream_name_key true
     remove_log_group_name_key true
-    auto_create_stream true
     concurrency 2
 {{- with $path := .SecretPath "aws_access_key_id"}}
     aws_key_id "#{open('{{ $path }}','r') do |f|f.read end}"

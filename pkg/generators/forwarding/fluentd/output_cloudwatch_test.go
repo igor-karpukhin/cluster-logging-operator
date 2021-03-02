@@ -85,7 +85,6 @@ var _ = Describe("Generating fluentd config", func() {
 					log_stream_name_key cw_stream_name
 					remove_log_stream_name_key true
 					remove_log_group_name_key true
-					auto_create_stream true
 					concurrency 2
 					aws_key_id "#{open('/var/run/ocp-collector/secrets/my-secret/aws_access_key_id','r') do |f|f.read end}"
 					aws_sec_key "#{open('/var/run/ocp-collector/secrets/my-secret/aws_secret_access_key','r') do |f|f.read end}"
@@ -138,7 +137,6 @@ var _ = Describe("Generating fluentd config", func() {
 					log_stream_name_key cw_stream_name
 					remove_log_stream_name_key true
 					remove_log_group_name_key true
-					auto_create_stream true
 					concurrency 2
 					aws_key_id "#{open('/var/run/ocp-collector/secrets/my-secret/aws_access_key_id','r') do |f|f.read end}"
 					aws_sec_key "#{open('/var/run/ocp-collector/secrets/my-secret/aws_secret_access_key','r') do |f|f.read end}"
@@ -194,7 +192,6 @@ var _ = Describe("Generating fluentd config", func() {
 					log_stream_name_key cw_stream_name
 					remove_log_stream_name_key true
 					remove_log_group_name_key true
-					auto_create_stream true
 					concurrency 2
 					aws_key_id "#{open('/var/run/ocp-collector/secrets/my-secret/aws_access_key_id','r') do |f|f.read end}"
 					aws_sec_key "#{open('/var/run/ocp-collector/secrets/my-secret/aws_secret_access_key','r') do |f|f.read end}"

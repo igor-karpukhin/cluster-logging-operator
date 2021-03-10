@@ -98,6 +98,8 @@ func (clusterRequest *ClusterLoggingRequest) CreateOrUpdateCertificates() (err e
 			}
 		}
 
+		clusterRequest.EventRecorder.Event(clusterRequest.Cluster, "Normal", "Updated", "certificates successfully updated")
+
 		return nil
 	})
 }
